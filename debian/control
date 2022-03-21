@@ -18,7 +18,6 @@ Build-Depends: debhelper (>= 11), dpkg-dev (>= 1.17.11),
   media-types | mime-support, netbase, bzip2, time, python3:any, python3.9:any <cross>,
   net-tools, xvfb <!nocheck>, xauth <!nocheck>,
   systemtap-sdt-dev
-Build-Depends-Indep: python3-sphinx, python3-docs-theme, texinfo
 Build-Conflicts: git
 Standards-Version: 4.5.1
 Vcs-Browser: https://salsa.debian.org/cpython-team/python3/tree/python3.9
@@ -122,13 +121,6 @@ Description: Shared Python runtime library (version 3.9)
  This package contains the shared runtime library, normally not needed
  for programs using the statically linked interpreter.
 
-Package: python3.9-examples
-Architecture: all
-Depends: python3.9:any (>= ${source:Version}), ${misc:Depends}
-Description: Examples for the Python language (v3.9)
- Examples, Demos and Tools for Python (v3.9). These are files included in
- the upstream Python distribution (v3.9).
-
 Package: python3.9-dev
 Architecture: any
 Multi-Arch: allowed
@@ -182,28 +174,6 @@ Enhances: python3.9
 Description: IDE for Python (v3.9) using Tkinter
  IDLE is an Integrated Development Environment for Python (v3.9).
  IDLE is written using Tkinter and therefore quite platform-independent.
-
-Package: python3.9-doc
-Section: doc
-Architecture: all
-Multi-Arch: foreign
-Depends: libjs-jquery, libjs-underscore, ${misc:Depends}
-Suggests: python3.9
-Description: Documentation for the high-level object-oriented language Python (v3.9)
- These is the official set of documentation for the interactive high-level
- object-oriented language Python (v3.9). All documents are provided
- in HTML format. The package consists of ten documents:
- .
-   * What's New in Python3.9
-   * Tutorial
-   * Python Library Reference
-   * Macintosh Module Reference
-   * Python Language Reference
-   * Extending and Embedding Python
-   * Python/C API Reference
-   * Installing Python Modules
-   * Documenting Python
-   * Distributing Python Modules
 
 Package: python3.9-dbg
 Section: debug

@@ -289,7 +289,8 @@ d_ldbg	:= debian/$(p_ldbg)
 d_ltst	:= debian/$(p_ltst)
 
 build-arch: stamps/stamp-build
-build-indep: stamps/stamp-build-doc
+# build-indep: stamps/stamp-build-doc
+build-indep: 
 build: build-arch
 stamps/stamp-build: stamps/stamp-build-static stamps/stamp-mincheck \
     stamps/stamp-build-shared stamps/stamp-build-debug \
@@ -1349,39 +1350,39 @@ binary-indep: build-indep install stamps/stamp-control
 	dh_testdir -i
 	dh_testroot -i
 
-	: # $(p_doc) package
-	dh_installdirs -p$(p_doc) \
-		usr/share/doc/$(p_base) \
-		usr/share/doc/$(p_doc)
-	dh_installdocs -p$(p_doc)
-	cp -a Doc/build/html $(d_doc)/usr/share/doc/$(p_base)/
-	rm -f $(d_doc)/usr/share/doc/$(p_base)/html/_static/jquery.js
-	dh_link -p$(p_doc) \
-		/usr/share/doc/$(p_base)/html /usr/share/doc/$(p_doc)/html \
-		/usr/share/javascript/jquery/jquery.js /usr/share/doc/$(p_base)/html/_static/jquery.js \
-		/usr/share/javascript/underscore/underscore.js /usr/share/doc/$(p_base)/html/_static/underscore.js
-	dh_installinfo -p$(p_doc)
-	for f in $(d_doc)/usr/share/doc/$(p_base)/html/_images/*.png; do \
-	  b=$$(basename $$f); \
-	  dh_link -p$(p_doc) /usr/share/doc/$(p_base)/html/_images/$$b /usr/share/info/$(PVER)/$$b; \
-	done
+# 	: # $(p_doc) package
+# 	dh_installdirs -p$(p_doc) \
+# 		usr/share/doc/$(p_base) \
+# 		usr/share/doc/$(p_doc)
+# 	dh_installdocs -p$(p_doc)
+# 	cp -a Doc/build/html $(d_doc)/usr/share/doc/$(p_base)/
+# 	rm -f $(d_doc)/usr/share/doc/$(p_base)/html/_static/jquery.js
+# 	dh_link -p$(p_doc) \
+# 		/usr/share/doc/$(p_base)/html /usr/share/doc/$(p_doc)/html \
+# 		/usr/share/javascript/jquery/jquery.js /usr/share/doc/$(p_base)/html/_static/jquery.js \
+# 		/usr/share/javascript/underscore/underscore.js /usr/share/doc/$(p_base)/html/_static/underscore.js
+# 	dh_installinfo -p$(p_doc)
+# 	for f in $(d_doc)/usr/share/doc/$(p_base)/html/_images/*.png; do \
+# 	  b=$$(basename $$f); \
+# 	  dh_link -p$(p_doc) /usr/share/doc/$(p_base)/html/_images/$$b /usr/share/info/$(PVER)/$$b; \
+# 	done
 
-	: # devhelp docs
-	cd $(buildd_static) && ./python ../debian/pyhtml2devhelp.py \
-		../$(d_doc)/usr/share/doc/$(p_base)/html index.html $(VER) \
-		> ../$(d_doc)/usr/share/doc/$(p_base)/html/$(PVER).devhelp
-	gzip -9nv $(d_doc)/usr/share/doc/$(p_base)/html/$(PVER).devhelp
-	dh_link -p$(p_doc) \
-		/usr/share/doc/$(p_base)/html /usr/share/devhelp/books/$(PVER)
+# 	: # devhelp docs
+# 	cd $(buildd_static) && ./python ../debian/pyhtml2devhelp.py \
+# 		../$(d_doc)/usr/share/doc/$(p_base)/html index.html $(VER) \
+# 		> ../$(d_doc)/usr/share/doc/$(p_base)/html/$(PVER).devhelp
+# 	gzip -9nv $(d_doc)/usr/share/doc/$(p_base)/html/$(PVER).devhelp
+# 	dh_link -p$(p_doc) \
+# 		/usr/share/doc/$(p_base)/html /usr/share/devhelp/books/$(PVER)
 
-	: # regenerate idlelib/help.html, see idlelib.help.copy_strip
-	sed 's/ *$$//' Doc/build/html/library/idle.html \
-		> $(d_idle)/usr/lib/python$(VER)/idlelib/help.html
+# 	: # regenerate idlelib/help.html, see idlelib.help.copy_strip
+# 	sed 's/ *$$//' Doc/build/html/library/idle.html \
+# 		> $(d_idle)/usr/lib/python$(VER)/idlelib/help.html
 
-	for i in $(p_ltst); do \
-	  rm -rf debian/$$i/usr/share/doc/$$i; \
-	  ln -s $(p_base) debian/$$i/usr/share/doc/$$i; \
-	done
+# 	for i in $(p_ltst); do \
+# 	  rm -rf debian/$$i/usr/share/doc/$$i; \
+# 	  ln -s $(p_base) debian/$$i/usr/share/doc/$$i; \
+# 	done
 
 	dh_installdebconf -i $(dh_args)
 	dh_installexamples -i $(dh_args)
