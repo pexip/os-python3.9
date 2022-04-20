@@ -1,7 +1,8 @@
 Source: @PVER@
 Section: python
 Priority: optional
-Maintainer: Matthias Klose <doko@debian.org>
+Maintainer: Pexip AS <packaging@pexip.com>
+XSBC-Pexip-Original-Maintainer: Matthias Klose <doko@debian.org>
 Build-Depends: debhelper (>= 11), @bd_dpkgdev@
   quilt, autoconf,
   lsb-release, sharutils,
@@ -17,12 +18,12 @@ Build-Depends: debhelper (>= 11), @bd_dpkgdev@
   media-types | mime-support, netbase, bzip2, time, python3@bd_qual@, @PVER@@bd_qual@ <cross>,
   net-tools, xvfb <!nocheck>, xauth <!nocheck>,
   systemtap-sdt-dev
-Build-Depends-Indep: python3-sphinx, python3-docs-theme, texinfo
 Build-Conflicts: git
 Standards-Version: 4.5.1
 Vcs-Browser: https://salsa.debian.org/cpython-team/python3/tree/python3.9
 Vcs-Git: https://salsa.debian.org/cpython-team/python3.git -b python3.9
 XS-Testsuite: autopkgtest
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye
 
 Package: @PVER@
 Architecture: any
@@ -120,13 +121,6 @@ Description: Shared Python runtime library (version @VER@)
  This package contains the shared runtime library, normally not needed
  for programs using the statically linked interpreter.
 
-Package: @PVER@-examples
-Architecture: all
-Depends: @PVER@:any (>= ${source:Version}), ${misc:Depends}
-Description: Examples for the Python language (v@VER@)
- Examples, Demos and Tools for Python (v@VER@). These are files included in
- the upstream Python distribution (v@VER@).
-
 Package: @PVER@-dev
 Architecture: any
 Multi-Arch: allowed
@@ -180,28 +174,6 @@ Enhances: @PVER@
 Description: IDE for Python (v@VER@) using Tkinter
  IDLE is an Integrated Development Environment for Python (v@VER@).
  IDLE is written using Tkinter and therefore quite platform-independent.
-
-Package: @PVER@-doc
-Section: doc
-Architecture: all
-Multi-Arch: foreign
-Depends: libjs-jquery, libjs-underscore, ${misc:Depends}
-Suggests: @PVER@
-Description: Documentation for the high-level object-oriented language Python (v@VER@)
- These is the official set of documentation for the interactive high-level
- object-oriented language Python (v@VER@). All documents are provided
- in HTML format. The package consists of ten documents:
- .
-   * What's New in Python@VER@
-   * Tutorial
-   * Python Library Reference
-   * Macintosh Module Reference
-   * Python Language Reference
-   * Extending and Embedding Python
-   * Python/C API Reference
-   * Installing Python Modules
-   * Documenting Python
-   * Distributing Python Modules
 
 Package: @PVER@-dbg
 Section: debug
