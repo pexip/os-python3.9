@@ -1081,17 +1081,6 @@ endif
 		$(d)/usr/share/man/man1/2to3-$(VER).1 \
 		$(d)/usr/lib/python$(VER)/lib2to3
 
-	: # Move the demos and tools into $(p_exam)'s doc directory
-	dh_installdirs -p$(p_exam) \
-		usr/share/doc/python$(VER)/examples
-	$(dh_compat2) dh_movefiles -p$(p_exam) --sourcedir=$(d) \
-		$(scriptdir)/turtledemo
-
-	cp -rp Tools/* $(d_exam)/usr/share/doc/python$(VER)/examples/
-	rm -rf $(d_exam)/usr/share/doc/python$(VER)/examples/Tools/{buildbot,msi}
-	: # XXX: We don't need rgb.txt, we'll use our own:
-	rm -rf $(d_exam)/usr/share/doc/python$(VER)/examples/Tools/pynche/X
-
 	: # IDLE
 	mv $(d)/usr/bin/idle$(VER) $(d)/usr/bin/idle-python$(VER)
 	rm -f $(d)/usr/lib/python$(VER)/idlelib/idle.bat
