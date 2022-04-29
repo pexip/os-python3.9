@@ -1,6 +1,7 @@
 python3.9 (3.9.2-1pexip3) pexip; urgency=medium
 
   * Build against libssl1.0
+  * add pexip site packages
 
  -- Huw Jones <huw@pexip.com>  Wed, 27 Apr 2022 12:44:20 +0100
 
