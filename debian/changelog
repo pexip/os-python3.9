@@ -1,3 +1,9 @@
+python3.9 (3.9.2-1pexip9) pexip; urgency=medium
+
+  * Build with --with-valgrind
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Thu, 29 Sep 2022 16:13:27 +0100
+
 python3.9 (3.9.2-1pexip8) pexip-bullseye; urgency=medium
 
   * Bullseye rebuild for ARM64 inclusion
