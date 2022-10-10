@@ -1,3 +1,10 @@
+python3.9 (3.9.2-1pexip10) pexip; urgency=medium
+
+  * Restore pexip_native-md5.diff to allow use of MD5 as a hash algorithm when
+    in FIPS mode.
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Mon, 10 Oct 2022 15:54:51 +0100
+
 python3.9 (3.9.2-1pexip9) pexip; urgency=medium
 
   * Build with --with-valgrind

@@ -1,0 +1,59 @@
+--- a/Lib/test/test_hashlib.py
++++ b/Lib/test/test_hashlib.py
+@@ -143,7 +143,7 @@
+         if _hashlib:
+             # These two algorithms should always be present when this module
+             # is compiled.  If not, something was compiled wrong.
+-            self.assertTrue(hasattr(_hashlib, 'openssl_md5'))
++            # self.assertTrue(hasattr(_hashlib, 'openssl_md5'))
+             self.assertTrue(hasattr(_hashlib, 'openssl_sha1'))
+             for algorithm, constructors in self.constructors_to_test.items():
+                 constructor = getattr(_hashlib, 'openssl_'+algorithm, None)
+--- a/Modules/_hashopenssl.c
++++ b/Modules/_hashopenssl.c
+@@ -244,6 +244,11 @@
+ {
+     const EVP_MD *digest = EVP_get_digestbyname(name);
+ 
++    /* We don't ever want to try and use MD5 from OpenSSL */
++    if (digest == EVP_md5()) {
++        digest = NULL;
++    }
++
+     /* OpenSSL uses dash instead of underscore in names of some algorithms
+      * like SHA3 and SHAKE. Detect different spellings. */
+     if (digest == NULL) {
+@@ -859,25 +864,6 @@
+     return ret_obj;
+ }
+ 
+-/*[clinic input]
+-_hashlib.openssl_md5
+-
+-    string as data_obj: object(py_default="b''") = NULL
+-    *
+-    usedforsecurity: bool = True
+-
+-Returns a md5 hash object; optionally initialized with a string
+-
+-[clinic start generated code]*/
+-
+-static PyObject *
+-_hashlib_openssl_md5_impl(PyObject *module, PyObject *data_obj,
+-                          int usedforsecurity)
+-/*[clinic end generated code: output=87b0186440a44f8c input=990e36d5e689b16e]*/
+-{
+-    return EVP_fast_new(module, data_obj, EVP_md5(), usedforsecurity);
+-}
+-
+ 
+ /*[clinic input]
+ _hashlib.openssl_sha1
+@@ -1958,7 +1944,6 @@
+     _HASHLIB_COMPARE_DIGEST_METHODDEF
+     _HASHLIB_HMAC_SINGLESHOT_METHODDEF
+     _HASHLIB_HMAC_NEW_METHODDEF
+-    _HASHLIB_OPENSSL_MD5_METHODDEF
+     _HASHLIB_OPENSSL_SHA1_METHODDEF
+     _HASHLIB_OPENSSL_SHA224_METHODDEF
+     _HASHLIB_OPENSSL_SHA256_METHODDEF
