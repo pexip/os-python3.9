@@ -1,3 +1,9 @@
+python3.9 (3.9.2-1pexip11) pexip; urgency=medium
+
+  * Build-Depend on OpenSSL 3
+
+ -- John-Mark Bell <jmb@pexip.com>  Thu, 10 Nov 2022 19:54:23 +0000
+
 python3.9 (3.9.2-1pexip10) pexip; urgency=medium
 
   * Restore pexip_native-md5.diff to allow use of MD5 as a hash algorithm when
