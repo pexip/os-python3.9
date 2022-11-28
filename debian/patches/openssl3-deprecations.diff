@@ -1,0 +1,565 @@
+diff --git a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
+index adc8653..b50855a 100644
+--- a/Modules/_hashopenssl.c
++++ b/Modules/_hashopenssl.c
+@@ -32,6 +32,9 @@
+ #  error "OPENSSL_THREADS is not defined, Python requires thread-safe OpenSSL"
+ #endif
+ 
++#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
++#include <openssl/params.h>
++#else
+ #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+ /* OpenSSL < 1.1.0 */
+ #define EVP_MD_CTX_new EVP_MD_CTX_create
+@@ -64,6 +67,183 @@ HMAC_CTX_get_md(const HMAC_CTX *ctx)
+ }
+ #endif
+ 
++typedef void OSSL_LIB_CTX;
++typedef void EVP_MAC;
++
++typedef struct {
++    const char *key;
++    void *data;
++    size_t data_size;
++} OSSL_PARAM;
++
++typedef struct {
++    HMAC_CTX *ctx;
++} EVP_MAC_CTX;
++
++OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key,
++    char *buf, size_t bsize)
++{
++    OSSL_PARAM result;
++
++    if (buf != NULL && bsize == 0)
++        bsize = strlen(buf);
++
++    result.key = key;
++    result.data = buf;
++    result.data_size = bsize;
++
++    return result;
++}
++
++OSSL_PARAM OSSL_PARAM_construct_end(void)
++{
++    OSSL_PARAM result = {NULL, NULL, 0};
++    return result;
++}
++
++EVP_MAC *
++EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
++    const char *properties)
++{
++    (void) libctx;
++    (void) algorithm;
++    (void) properties;
++
++    return (EVP_MAC *) 1;
++}
++
++void
++EVP_MAC_free(EVP_MAC *mac)
++{
++    (void) mac;
++}
++
++EVP_MAC_CTX *
++EVP_MAC_CTX_new(EVP_MAC *mac)
++{
++    EVP_MAC_CTX *ctx = OPENSSL_malloc(sizeof(EVP_MAC_CTX));
++    (void) mac;
++    if (ctx != NULL) {
++        ctx->ctx = HMAC_CTX_new();
++        if (ctx->ctx == NULL) {
++            OPENSSL_free(ctx);
++            ctx = NULL;
++        }
++    }
++    return ctx;
++}
++
++void
++EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
++{
++    if (ctx != NULL) {
++        HMAC_CTX_free(ctx->ctx);
++        OPENSSL_free(ctx);
++    }
++}
++
++EVP_MAC_CTX *
++EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
++{
++    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(NULL);
++    if (ctx != NULL) {
++        if (!HMAC_CTX_copy(ctx->ctx, src->ctx)) {
++            EVP_MAC_CTX_free(ctx);
++            ctx = NULL;
++	}
++    }
++    return ctx;
++}
++
++size_t
++EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
++{
++    return EVP_MD_size(HMAC_CTX_get_md(ctx->ctx));
++}
++
++size_t
++EVP_MAC_CTX_get_block_size(EVP_MAC_CTX *ctx)
++{
++    const EVP_MD *md = HMAC_CTX_get_md(ctx->ctx);
++    return EVP_MD_block_size(md);
++}
++
++int
++EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
++    const OSSL_PARAM params[])
++{
++    const EVP_MD *digest;
++
++    if (params == NULL || params[0].key == NULL ||
++        strcmp(params[0].key, "digest") != 0 || params[0].data == NULL ||
++        params[1].key != NULL) {
++        return 0;
++    }
++
++    digest = EVP_get_digestbyname((const char *) params[0].data);
++    if (digest == NULL) {
++        return NULL;
++    }
++
++    return HMAC_Init_ex(
++        ctx->ctx,
++        (const char *) key,
++        (int) keylen,
++        digest,
++        NULL /*impl*/);
++}
++
++int
++EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
++{
++    return HMAC_Update(ctx->ctx, data, datalen);
++}
++
++int
++EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *outl,
++    size_t outsize)
++{
++    unsigned int l = (unsigned int) outsize;
++    int r;
++
++    r = HMAC_Final(ctx->ctx, out, &l);
++    if (r == 1)
++        *outl = (size_t) l;
++    return r;
++}
++
++unsigned char *
++EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
++    const char *subalg, const OSSL_PARAM *params,
++    const void *key, size_t keylen,
++    const unsigned char *data, size_t datalen,
++    unsigned char *out, size_t outsize, size_t *outlen)
++{
++    const EVP_MD *evp;
++
++    (void) libctx;
++    (void) propq;
++    (void) params;
++
++    if (name == NULL || strcasecmp(name, "HMAC") != 0 || subalg == NULL) {
++        return NULL;
++    }
++
++    evp = EVP_get_digestbyname(subalg);
++    if (evp == NULL || EVP_MD_size(evp) < outsize) {
++        return NULL;
++    }
++
++    return HMAC(
++        evp,
++        key, (int)keylen, data, (int)datalen,
++        out, (unsigned int*)outlen
++    );
++}
++
++#define EVP_MD_CTX_get0_md EVP_MD_CTX_md
++#endif
++
+ #define MUNCH_SIZE INT_MAX
+ 
+ #ifdef NID_sha3_224
+@@ -104,7 +284,8 @@ typedef struct {
+ 
+ typedef struct {
+     PyObject_HEAD
+-    HMAC_CTX *ctx;            /* OpenSSL hmac context */
++    const EVP_MD *md;         /* OpenSSL MD */
++    EVP_MAC_CTX *ctx;         /* OpenSSL mac context */
+     PyThread_type_lock lock;  /* HMAC context lock */
+ } HMACobject;
+ 
+@@ -133,7 +314,11 @@ _setException(PyObject *exc)
+     ERR_clear_error();
+ 
+     lib = ERR_lib_error_string(errcode);
++#if (OPENSSL_VERSION_NUMBER < 0x30000000L)
+     func = ERR_func_error_string(errcode);
++#else
++    func = "";
++#endif
+     reason = ERR_reason_error_string(errcode);
+ 
+     if (lib && func) {
+@@ -516,7 +701,7 @@ EVP_get_digest_size(EVPobject *self, void *closure)
+ static PyObject *
+ EVP_get_name(EVPobject *self, void *closure)
+ {
+-    return py_digest_name(EVP_MD_CTX_md(self->ctx));
++    return py_digest_name(EVP_MD_CTX_get0_md(self->ctx));
+ }
+ 
+ static PyGetSetDef EVP_getseters[] = {
+@@ -540,7 +725,7 @@ static PyObject *
+ EVP_repr(EVPobject *self)
+ {
+     PyObject *name_obj, *repr;
+-    name_obj = py_digest_name(EVP_MD_CTX_md(self->ctx));
++    name_obj = py_digest_name(EVP_MD_CTX_get0_md(self->ctx));
+     if (!name_obj) {
+         return NULL;
+     }
+@@ -1339,7 +1524,7 @@ _hashlib_hmac_singleshot_impl(PyObject *module, Py_buffer *key,
+ /*[clinic end generated code: output=15658ede5ab98185 input=019dffc571909a46]*/
+ {
+     unsigned char md[EVP_MAX_MD_SIZE] = {0};
+-    unsigned int md_len = 0;
++    size_t md_len = 0;
+     unsigned char *result;
+     const EVP_MD *evp;
+ 
+@@ -1360,11 +1545,10 @@ _hashlib_hmac_singleshot_impl(PyObject *module, Py_buffer *key,
+     }
+ 
+     Py_BEGIN_ALLOW_THREADS
+-    result = HMAC(
+-        evp,
+-        (const void*)key->buf, (int)key->len,
+-        (const unsigned char*)msg->buf, (int)msg->len,
+-        md, &md_len
++    result = EVP_Q_mac(NULL, "HMAC", NULL, EVP_MD_name(evp), NULL,
++        (const void*)key->buf, key->len,
++        (const unsigned char*)msg->buf, msg->len,
++        md, sizeof(md), &md_len
+     );
+     Py_END_ALLOW_THREADS
+ 
+@@ -1397,7 +1581,9 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+ {
+     PyTypeObject *type = get_hashlib_state(module)->HMACtype;
+     const EVP_MD *digest;
+-    HMAC_CTX *ctx = NULL;
++    OSSL_PARAM params[2];
++    EVP_MAC *mac = NULL;
++    EVP_MAC_CTX *ctx = NULL;
+     HMACobject *self = NULL;
+     int r;
+ 
+@@ -1419,18 +1605,27 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+         return NULL;
+     }
+ 
+-    ctx = HMAC_CTX_new();
++    mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
++    if (mac == NULL) {
++        _setException(PyExc_ValueError);
++	goto error;
++    }
++
++    ctx = EVP_MAC_CTX_new(mac);
+     if (ctx == NULL) {
+         _setException(PyExc_ValueError);
+         goto error;
+     }
+ 
+-    r = HMAC_Init_ex(
++    params[0] = OSSL_PARAM_construct_utf8_string("digest",
++        (char *) EVP_MD_name(digest), 0);
++    params[1] = OSSL_PARAM_construct_end();
++
++    r = EVP_MAC_init(
+         ctx,
+-        (const char*)key->buf,
+-        (int)key->len,
+-        digest,
+-        NULL /*impl*/);
++        (const unsigned char*)key->buf,
++        (size_t)key->len,
++        params);
+     if (r == 0) {
+         _setException(PyExc_ValueError);
+         goto error;
+@@ -1441,6 +1636,7 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+         goto error;
+     }
+ 
++    self->md = digest;
+     self->ctx = ctx;
+     self->lock = NULL;
+ 
+@@ -1452,28 +1648,19 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+     return (PyObject*)self;
+ 
+ error:
+-    if (ctx) HMAC_CTX_free(ctx);
++    if (ctx) EVP_MAC_CTX_free(ctx);
++    if (mac) EVP_MAC_free(mac);
+     if (self) PyObject_Del(self);
+     return NULL;
+ }
+ 
+ /* helper functions */
+-static int
+-locked_HMAC_CTX_copy(HMAC_CTX *new_ctx_p, HMACobject *self)
+-{
+-    int result;
+-    ENTER_HASHLIB(self);
+-    result = HMAC_CTX_copy(new_ctx_p, self->ctx);
+-    LEAVE_HASHLIB(self);
+-    return result;
+-}
+-
+ static unsigned int
+ _hmac_digest_size(HMACobject *self)
+ {
+-    unsigned int digest_size = EVP_MD_size(HMAC_CTX_get_md(self->ctx));
++    size_t digest_size = EVP_MAC_CTX_get_mac_size(self->ctx);
+     assert(digest_size <= EVP_MAX_MD_SIZE);
+-    return digest_size;
++    return (unsigned int) digest_size;
+ }
+ 
+ static int
+@@ -1491,10 +1678,10 @@ _hmac_update(HMACobject *self, PyObject *obj)
+ 
+     if (self->lock != NULL) {
+         ENTER_HASHLIB(self);
+-        r = HMAC_Update(self->ctx, (const unsigned char*)view.buf, view.len);
++        r = EVP_MAC_update(self->ctx, (const unsigned char*)view.buf, view.len);
+         LEAVE_HASHLIB(self);
+     } else {
+-        r = HMAC_Update(self->ctx, (const unsigned char*)view.buf, view.len);
++        r = EVP_MAC_update(self->ctx, (const unsigned char*)view.buf, view.len);
+     }
+ 
+     PyBuffer_Release(&view);
+@@ -1518,20 +1705,17 @@ _hashlib_HMAC_copy_impl(HMACobject *self)
+ {
+     HMACobject *retval;
+ 
+-    HMAC_CTX *ctx = HMAC_CTX_new();
++    EVP_MAC_CTX *ctx = EVP_MAC_CTX_dup(self->ctx);
+     if (ctx == NULL) {
+         return _setException(PyExc_ValueError);
+     }
+-    if (!locked_HMAC_CTX_copy(ctx, self)) {
+-        HMAC_CTX_free(ctx);
+-        return _setException(PyExc_ValueError);
+-    }
+ 
+     retval = (HMACobject *)PyObject_New(HMACobject, Py_TYPE(self));
+     if (retval == NULL) {
+-        HMAC_CTX_free(ctx);
++        EVP_MAC_CTX_free(ctx);
+         return NULL;
+     }
++    retval->md = self->md;
+     retval->ctx = ctx;
+     retval->lock = NULL;
+ 
+@@ -1545,7 +1729,7 @@ _hmac_dealloc(HMACobject *self)
+     if (self->lock != NULL) {
+         PyThread_free_lock(self->lock);
+     }
+-    HMAC_CTX_free(self->ctx);
++    EVP_MAC_CTX_free(self->ctx);
+     PyObject_Del(self);
+     Py_DECREF(tp);
+ }
+@@ -1553,7 +1737,7 @@ _hmac_dealloc(HMACobject *self)
+ static PyObject *
+ _hmac_repr(HMACobject *self)
+ {
+-    PyObject *digest_name = py_digest_name(HMAC_CTX_get_md(self->ctx));
++    PyObject *digest_name = py_digest_name(self->md);
+     if (digest_name == NULL) {
+         return NULL;
+     }
+@@ -1584,17 +1768,14 @@ _hashlib_HMAC_update_impl(HMACobject *self, PyObject *msg)
+ static int
+ _hmac_digest(HMACobject *self, unsigned char *buf, unsigned int len)
+ {
+-    HMAC_CTX *temp_ctx = HMAC_CTX_new();
++    size_t outsize = len;
++    EVP_MAC_CTX *temp_ctx = EVP_MAC_CTX_dup(self->ctx);
+     if (temp_ctx == NULL) {
+         PyErr_NoMemory();
+         return 0;
+     }
+-    if (!locked_HMAC_CTX_copy(temp_ctx, self)) {
+-        _setException(PyExc_ValueError);
+-        return 0;
+-    }
+-    int r = HMAC_Final(temp_ctx, buf, &len);
+-    HMAC_CTX_free(temp_ctx);
++    int r = EVP_MAC_final(temp_ctx, buf, &outsize, outsize);
++    EVP_MAC_CTX_free(temp_ctx);
+     if (r == 0) {
+         _setException(PyExc_ValueError);
+         return 0;
+@@ -1661,17 +1842,13 @@ _hashlib_hmac_get_digest_size(HMACobject *self, void *closure)
+ static PyObject *
+ _hashlib_hmac_get_block_size(HMACobject *self, void *closure)
+ {
+-    const EVP_MD *md = HMAC_CTX_get_md(self->ctx);
+-    if (md == NULL) {
+-        return _setException(PyExc_ValueError);
+-    }
+-    return PyLong_FromLong(EVP_MD_block_size(md));
++    return PyLong_FromLong(EVP_MAC_CTX_get_block_size(self->ctx));
+ }
+ 
+ static PyObject *
+ _hashlib_hmac_get_name(HMACobject *self, void *closure)
+ {
+-    PyObject *digest_name = py_digest_name(HMAC_CTX_get_md(self->ctx));
++    PyObject *digest_name = py_digest_name(self->md);
+     if (digest_name == NULL) {
+         return NULL;
+     }
+@@ -1828,8 +2005,8 @@ _hashlib_get_fips_mode_impl(PyObject *module)
+             return -1;
+         }
+     }
+-    return result;
+ #endif
++    return result;
+ }
+ #endif  // !LIBRESSL_VERSION_NUMBER
+ 
+diff --git a/Modules/_ssl.c b/Modules/_ssl.c
+index 7bdde45..fd028fc 100644
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -137,6 +137,21 @@ static void _PySSLFixErrno(void) {
+ /* Include generated data (error codes) */
+ #include "_ssl_data.h"
+ 
++#if (OPENSSL_VERSION_NUMBER < 0x30000000L)
++#  define SSL_get1_peer_certificate SSL_get_peer_certificate
++#else
++/* Disable version methods when building for OpenSSL 3 */
++#ifndef OPENSSL_NO_TLS1_METHOD
++#define OPENSSL_NO_TLS1_METHOD 1
++#endif
++#ifndef OPENSSL_NO_TLS1_1_METHOD
++#define OPENSSL_NO_TLS1_1_METHOD 1
++#endif
++#ifndef OPENSSL_NO_TLS1_2_METHOD
++#define OPENSSL_NO_TLS1_2_METHOD 1
++#endif
++#endif
++
+ #if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
+ #  define OPENSSL_VERSION_1_1 1
+ #  define PY_OPENSSL_1_1_API 1
+@@ -1930,7 +1945,7 @@ _ssl__SSLSocket_getpeercert_impl(PySSLSocket *self, int binary_mode)
+                         "handshake not done yet");
+         return NULL;
+     }
+-    peer_cert = SSL_get_peer_certificate(self->ssl);
++    peer_cert = SSL_get1_peer_certificate(self->ssl);
+     if (peer_cert == NULL)
+         Py_RETURN_NONE;
+ 
+@@ -4290,18 +4305,25 @@ _ssl__SSLContext_load_dh_params(PySSLContext *self, PyObject *filepath)
+ /*[clinic end generated code: output=1c8e57a38e055af0 input=c8871f3c796ae1d6]*/
+ {
+     FILE *f;
+-    DH *dh;
++    BIO *b;
++    EVP_PKEY *pkey;
+ 
+     f = _Py_fopen_obj(filepath, "rb");
+     if (f == NULL)
+         return NULL;
+ 
++    b = BIO_new_fp(f, 0);
++    if (b == NULL) {
++        fclose(f);
++        return NULL;
++    }
+     errno = 0;
+     PySSL_BEGIN_ALLOW_THREADS
+-    dh = PEM_read_DHparams(f, NULL, NULL, NULL);
++    pkey = PEM_read_bio_Parameters(b, NULL);
++    BIO_free(b);
+     fclose(f);
+     PySSL_END_ALLOW_THREADS
+-    if (dh == NULL) {
++    if (pkey == NULL) {
+         if (errno != 0) {
+             ERR_clear_error();
+             PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, filepath);
+@@ -4311,11 +4333,18 @@ _ssl__SSLContext_load_dh_params(PySSLContext *self, PyObject *filepath)
+         }
+         return NULL;
+     }
+-    if (!SSL_CTX_set_tmp_dh(self->ctx, dh)) {
+-        DH_free(dh);
++#if (OPENSSL_VERSION_NUMBER < 0x30000000L)
++    if (!SSL_CTX_set_tmp_dh(self->ctx, EVP_PKEY_get0_DH(pkey))) {
++        EVP_PKEY_free(pkey);
+         return _setSSLError(NULL, 0, __FILE__, __LINE__);
+     }
+-    DH_free(dh);
++    EVP_PKEY_free(pkey);
++#else
++    if (!SSL_CTX_set0_tmp_dh_pkey(self->ctx, pkey)) {
++        EVP_PKEY_free(pkey);
++        return _setSSLError(NULL, 0, __FILE__, __LINE__);
++    }
++#endif
+     Py_RETURN_NONE;
+ }
+ 
+@@ -4465,7 +4494,6 @@ _ssl__SSLContext_set_ecdh_curve(PySSLContext *self, PyObject *name)
+ {
+     PyObject *name_bytes;
+     int nid;
+-    EC_KEY *key;
+ 
+     if (!PyUnicode_FSConverter(name, &name_bytes))
+         return NULL;
+@@ -4477,13 +4505,10 @@ _ssl__SSLContext_set_ecdh_curve(PySSLContext *self, PyObject *name)
+                      "unknown elliptic curve name %R", name);
+         return NULL;
+     }
+-    key = EC_KEY_new_by_curve_name(nid);
+-    if (key == NULL) {
++    if (!SSL_CTX_set1_curves(self->ctx, &nid, 1)) {
+         _setSSLError(NULL, 0, __FILE__, __LINE__);
+         return NULL;
+     }
+-    SSL_CTX_set_tmp_ecdh(self->ctx, key);
+-    EC_KEY_free(key);
+     Py_RETURN_NONE;
+ }
+ #endif

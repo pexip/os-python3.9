@@ -42,3 +42,4 @@ mpdecimal-2.5.1.diff
 expat-fix-test-suite.diff
 leading-zeroes-ipv4-not-tolerated.diff
 pexip_native-md5.diff
+openssl3-deprecations.diff
