@@ -1,3 +1,11 @@
+python3.9 (3.9.2-1pexip13) pexip; urgency=medium
+
+  * Fix distutils/setuptools build
+    See https://github.com/pypa/setuptools/issues/2956 and
+     https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1003252
+
+ -- Huw Jones <huw@pexip.com>  Tue, 14 Mar 2023 17:14:22 +0000
+
 python3.9 (3.9.2-1pexip12) pexip; urgency=medium
 
   * Merge openssl3 changes to bullseye
