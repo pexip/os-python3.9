@@ -1,5 +1,3 @@
-diff --git a/Modules/_hashopenssl.c b/Modules/_hashopenssl.c
-index adc8653..b50855a 100644
 --- a/Modules/_hashopenssl.c
 +++ b/Modules/_hashopenssl.c
 @@ -32,6 +32,9 @@
@@ -12,7 +10,7 @@ index adc8653..b50855a 100644
  #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
  /* OpenSSL < 1.1.0 */
  #define EVP_MD_CTX_new EVP_MD_CTX_create
-@@ -64,6 +67,183 @@ HMAC_CTX_get_md(const HMAC_CTX *ctx)
+@@ -64,6 +67,183 @@
  }
  #endif
  
@@ -196,7 +194,7 @@ index adc8653..b50855a 100644
  #define MUNCH_SIZE INT_MAX
  
  #ifdef NID_sha3_224
-@@ -104,7 +284,8 @@ typedef struct {
+@@ -104,7 +284,8 @@
  
  typedef struct {
      PyObject_HEAD
@@ -206,7 +204,7 @@ index adc8653..b50855a 100644
      PyThread_type_lock lock;  /* HMAC context lock */
  } HMACobject;
  
-@@ -133,7 +314,11 @@ _setException(PyObject *exc)
+@@ -133,7 +314,11 @@
      ERR_clear_error();
  
      lib = ERR_lib_error_string(errcode);
@@ -218,7 +216,7 @@ index adc8653..b50855a 100644
      reason = ERR_reason_error_string(errcode);
  
      if (lib && func) {
-@@ -516,7 +701,7 @@ EVP_get_digest_size(EVPobject *self, void *closure)
+@@ -521,7 +706,7 @@
  static PyObject *
  EVP_get_name(EVPobject *self, void *closure)
  {
@@ -227,7 +225,7 @@ index adc8653..b50855a 100644
  }
  
  static PyGetSetDef EVP_getseters[] = {
-@@ -540,7 +725,7 @@ static PyObject *
+@@ -545,7 +730,7 @@
  EVP_repr(EVPobject *self)
  {
      PyObject *name_obj, *repr;
@@ -236,7 +234,7 @@ index adc8653..b50855a 100644
      if (!name_obj) {
          return NULL;
      }
-@@ -1339,7 +1524,7 @@ _hashlib_hmac_singleshot_impl(PyObject *module, Py_buffer *key,
+@@ -1325,7 +1510,7 @@
  /*[clinic end generated code: output=15658ede5ab98185 input=019dffc571909a46]*/
  {
      unsigned char md[EVP_MAX_MD_SIZE] = {0};
@@ -245,7 +243,7 @@ index adc8653..b50855a 100644
      unsigned char *result;
      const EVP_MD *evp;
  
-@@ -1360,11 +1545,10 @@ _hashlib_hmac_singleshot_impl(PyObject *module, Py_buffer *key,
+@@ -1346,11 +1531,10 @@
      }
  
      Py_BEGIN_ALLOW_THREADS
@@ -261,7 +259,7 @@ index adc8653..b50855a 100644
      );
      Py_END_ALLOW_THREADS
  
-@@ -1397,7 +1581,9 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+@@ -1383,7 +1567,9 @@
  {
      PyTypeObject *type = get_hashlib_state(module)->HMACtype;
      const EVP_MD *digest;
@@ -272,7 +270,7 @@ index adc8653..b50855a 100644
      HMACobject *self = NULL;
      int r;
  
-@@ -1419,18 +1605,27 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+@@ -1405,18 +1591,27 @@
          return NULL;
      }
  
@@ -306,7 +304,7 @@ index adc8653..b50855a 100644
      if (r == 0) {
          _setException(PyExc_ValueError);
          goto error;
-@@ -1441,6 +1636,7 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+@@ -1427,6 +1622,7 @@
          goto error;
      }
  
@@ -314,7 +312,7 @@ index adc8653..b50855a 100644
      self->ctx = ctx;
      self->lock = NULL;
  
-@@ -1452,28 +1648,19 @@ _hashlib_hmac_new_impl(PyObject *module, Py_buffer *key, PyObject *msg_obj,
+@@ -1438,28 +1634,19 @@
      return (PyObject*)self;
  
  error:
@@ -347,7 +345,7 @@ index adc8653..b50855a 100644
  }
  
  static int
-@@ -1491,10 +1678,10 @@ _hmac_update(HMACobject *self, PyObject *obj)
+@@ -1477,10 +1664,10 @@
  
      if (self->lock != NULL) {
          ENTER_HASHLIB(self);
@@ -360,7 +358,7 @@ index adc8653..b50855a 100644
      }
  
      PyBuffer_Release(&view);
-@@ -1518,20 +1705,17 @@ _hashlib_HMAC_copy_impl(HMACobject *self)
+@@ -1504,20 +1691,17 @@
  {
      HMACobject *retval;
  
@@ -384,7 +382,7 @@ index adc8653..b50855a 100644
      retval->ctx = ctx;
      retval->lock = NULL;
  
-@@ -1545,7 +1729,7 @@ _hmac_dealloc(HMACobject *self)
+@@ -1531,7 +1715,7 @@
      if (self->lock != NULL) {
          PyThread_free_lock(self->lock);
      }
@@ -393,7 +391,7 @@ index adc8653..b50855a 100644
      PyObject_Del(self);
      Py_DECREF(tp);
  }
-@@ -1553,7 +1737,7 @@ _hmac_dealloc(HMACobject *self)
+@@ -1539,7 +1723,7 @@
  static PyObject *
  _hmac_repr(HMACobject *self)
  {
@@ -402,7 +400,7 @@ index adc8653..b50855a 100644
      if (digest_name == NULL) {
          return NULL;
      }
-@@ -1584,17 +1768,14 @@ _hashlib_HMAC_update_impl(HMACobject *self, PyObject *msg)
+@@ -1570,17 +1754,14 @@
  static int
  _hmac_digest(HMACobject *self, unsigned char *buf, unsigned int len)
  {
@@ -424,7 +422,7 @@ index adc8653..b50855a 100644
      if (r == 0) {
          _setException(PyExc_ValueError);
          return 0;
-@@ -1661,17 +1842,13 @@ _hashlib_hmac_get_digest_size(HMACobject *self, void *closure)
+@@ -1647,17 +1828,13 @@
  static PyObject *
  _hashlib_hmac_get_block_size(HMACobject *self, void *closure)
  {
@@ -444,7 +442,7 @@ index adc8653..b50855a 100644
      if (digest_name == NULL) {
          return NULL;
      }
-@@ -1828,8 +2005,8 @@ _hashlib_get_fips_mode_impl(PyObject *module)
+@@ -1814,8 +1991,8 @@
              return -1;
          }
      }
@@ -454,11 +452,9 @@ index adc8653..b50855a 100644
  }
  #endif  // !LIBRESSL_VERSION_NUMBER
  
-diff --git a/Modules/_ssl.c b/Modules/_ssl.c
-index 7bdde45..fd028fc 100644
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
-@@ -137,6 +137,21 @@ static void _PySSLFixErrno(void) {
+@@ -137,6 +137,21 @@
  /* Include generated data (error codes) */
  #include "_ssl_data.h"
  
@@ -480,7 +476,7 @@ index 7bdde45..fd028fc 100644
  #if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
  #  define OPENSSL_VERSION_1_1 1
  #  define PY_OPENSSL_1_1_API 1
-@@ -1930,7 +1945,7 @@ _ssl__SSLSocket_getpeercert_impl(PySSLSocket *self, int binary_mode)
+@@ -1930,7 +1945,7 @@
                          "handshake not done yet");
          return NULL;
      }
@@ -489,7 +485,7 @@ index 7bdde45..fd028fc 100644
      if (peer_cert == NULL)
          Py_RETURN_NONE;
  
-@@ -4290,18 +4305,25 @@ _ssl__SSLContext_load_dh_params(PySSLContext *self, PyObject *filepath)
+@@ -4290,18 +4305,25 @@
  /*[clinic end generated code: output=1c8e57a38e055af0 input=c8871f3c796ae1d6]*/
  {
      FILE *f;
@@ -518,7 +514,7 @@ index 7bdde45..fd028fc 100644
          if (errno != 0) {
              ERR_clear_error();
              PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, filepath);
-@@ -4311,11 +4333,18 @@ _ssl__SSLContext_load_dh_params(PySSLContext *self, PyObject *filepath)
+@@ -4311,11 +4333,18 @@
          }
          return NULL;
      }
@@ -540,7 +536,7 @@ index 7bdde45..fd028fc 100644
      Py_RETURN_NONE;
  }
  
-@@ -4465,7 +4494,6 @@ _ssl__SSLContext_set_ecdh_curve(PySSLContext *self, PyObject *name)
+@@ -4465,7 +4494,6 @@
  {
      PyObject *name_bytes;
      int nid;
@@ -548,7 +544,7 @@ index 7bdde45..fd028fc 100644
  
      if (!PyUnicode_FSConverter(name, &name_bytes))
          return NULL;
-@@ -4477,13 +4505,10 @@ _ssl__SSLContext_set_ecdh_curve(PySSLContext *self, PyObject *name)
+@@ -4477,13 +4505,10 @@
                       "unknown elliptic curve name %R", name);
          return NULL;
      }
