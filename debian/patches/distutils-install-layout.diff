@@ -218,10 +218,10 @@ Forwarded: not-needed
          if os.sep == '/':
 +            if is_virtual_environment:
 +                sitepackages.append(os.path.join(prefix, "lib",
-+                                                 "python" + sys.version[:3],
++                                                 "python%d.%d" % sys.version_info[:2],
 +                                                 "site-packages"))
 +            sitepackages.append(os.path.join(prefix, "local/lib",
-+                                             "python" + sys.version[:3],
++                                             "python%d.%d" % sys.version_info[:2],
 +                                             "dist-packages"))
 +            sitepackages.append(os.path.join(prefix, "lib",
 +                                             "python3",
@@ -229,9 +229,8 @@ Forwarded: not-needed
 +            # this one is deprecated for Debian
              for libdir in libdirs:
                  path = os.path.join(prefix, libdir,
--                                    "python%d.%d" % sys.version_info[:2],
+                                     "python%d.%d" % sys.version_info[:2],
 -                                    "site-packages")
-+                                    "python" + sys.version[:3],
 +                                    "dist-packages")
                  sitepackages.append(path)
          else:
@@ -305,7 +304,7 @@ Forwarded: not-needed
 +++ b/Lib/_distutils_system_mod.py
 @@ -0,0 +1,180 @@
 +"""
-+Apply Debian-specific patches to distutils commands and sysconfig.
++Apply Debian-specific patches to distutils commands.
 +
 +Extracts the customized behavior from patches as reported
 +in pypa/distutils#2 and applies those customizations (except
