@@ -4,8 +4,8 @@ deb-locations.diff
 distutils-install-layout.diff
 locale-module.diff
 distutils-link.diff
-#distutils-sysconfig.diff
-#sysconfig-debian-schemes.diff
+distutils-sysconfig.diff
+sysconfig-debian-schemes.diff
 tkinter-import.diff
 gdbm-import.diff
 link-opt.diff
