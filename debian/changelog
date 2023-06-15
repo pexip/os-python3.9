@@ -1,3 +1,9 @@
+python3.9 (3.9.2-1pexip15) pexip; urgency=medium
+
+  * bpo-43788: Generate version specific _ssl_data.h
+
+ -- Huw Jones <huw@pexip.com>  Thu, 15 Jun 2023 13:40:32 +0100
+
 python3.9 (3.9.2-1pexip14) pexip; urgency=medium
 
   * Actually fix distutils/setuptools build
