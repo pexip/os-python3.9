@@ -1,3 +1,9 @@
+python3.9 (3.9.2-1pexip16) pexip; urgency=medium
+
+  * bpo-43794: OpenSSL 3.0.0: set OP_IGNORE_UNEXPECTED_EOF by default
+
+ -- Huw Jones <huw@pexip.com>  Tue, 20 Jun 2023 10:11:08 +0100
+
 python3.9 (3.9.2-1pexip15) pexip; urgency=medium
 
   * bpo-43788: Generate version specific _ssl_data.h
