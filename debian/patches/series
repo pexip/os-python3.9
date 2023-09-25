@@ -45,3 +45,6 @@ pexip_native-md5.diff
 openssl3-deprecations.diff
 pexip-openssl3-error-codes.patch
 pexip-openssl3-ignore-unexpected-eof.patch
+pexip-CVE-2023-40217a.patch
+pexip-CVE-2023-40217b.patch
+pexip-CVE-2023-40217c.patch
