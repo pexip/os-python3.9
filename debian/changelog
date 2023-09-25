@@ -1,3 +1,9 @@
+python3.9 (3.9.2-1pexip17) pexip; urgency=medium
+
+  * Add patches for CVE-2023-40217
+
+ -- John-Mark Bell <jmb@pexip.com>  Mon, 25 Sep 2023 15:15:11 +0100
+
 python3.9 (3.9.2-1pexip16) pexip; urgency=medium
 
   * bpo-43794: OpenSSL 3.0.0: set OP_IGNORE_UNEXPECTED_EOF by default
