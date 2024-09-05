@@ -381,7 +381,6 @@ common_configure_args = \
 		--without-ensurepip \
 		--with-system-expat \
 		--with-dtrace \
-		--with-system-libmpdec \
 		--with-valgrind
 
 ifneq (,$(filter $(DEB_HOST_ARCH), avr32 or1k))

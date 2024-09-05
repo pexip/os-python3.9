@@ -10,7 +10,7 @@ Build-Depends: debhelper (>= 11), @bd_dpkgdev@
   zlib1g-dev, libbz2-dev, liblzma-dev,
   libgdbm-dev, libdb-dev,
   tk-dev, blt-dev (>= 2.4z), libssl-dev (>= 3),
-  libexpat1-dev, libmpdec-dev (>= 2.5.1~),
+  libexpat1-dev,
   libbluetooth-dev [linux-any] <!pkg.@PVER@.nobluetooth>,
   locales-all,
   libsqlite3-dev, libffi-dev (>= 3.0.5) [!or1k !avr32],
